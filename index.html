@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>URL Shortener</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>URL Shortener</h1>
+    <form id="shortner">
+      <div class="given_input div-style">
+        <label for="url">Enter URL</label>
+        <input type="text" name="url" id="url" placeholder="https://example.xyz/abc...." />
+      </div>
+      <div class="given_shortCode div-style">
+        <label for="shortCode">Enter ShortCode</label>
+        <input type="text" name="shortCode" id="shortCode" placeholder="like ytuge .." />
+      </div>
+      <button type="submit">Shorten</button>
+    </form>
+    <h2>Shortened URLs</h2>
+    <ul id="result"></ul>
+  </div>
+
+  <script>
+    const fetchshortenlinks = async ()=>{
+        const response = await fetch("/links");
+        const links = await response.json();
+        console.log("links",links);
+
+        const list = document.getElementById("result")
+        list.innerHTML = "";
+
+        for (const [shortCode, url ] of Object.entries(links)){
+            const li = document.createElement('li');
+            li.innerHTML = `<a href ="/${shortCode}" target="_blank" > ${window.location.origin}/${shortCode}</a> - ${url}`
+            list.appendChild(li);
+        }
+
+
+    }
+
+    document.getElementById("shortner").addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const formData = new FormData(event.target);
+      const url = formData.get("url");
+      const shortCode = formData.get("shortCode");
+
+      if (!url) {
+        alert("Please enter a URL");
+        return;
+      }
+
+      try {
+        const response = await fetch("/shortner", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url, shortCode }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          fetchshortenlinks();
+          alert("Form submitted successfully");
+          event.target.reset();
+        } else {
+          const errorMessage = await response.text();
+          alert(errorMessage);
+          document.getElementById("result").textContent = "";
+        }
+      } catch (error) {
+        console.error(error);
+        alert("An error occurred while submitting the form");
+      }
+    });
+
+    fetchshortenlinks();
+  </script>
+</body>
+</html>
